@@ -25,7 +25,7 @@ class Window:
         # self.windowHeight = 1000
         # self.windowWidth = 1000
 
-        self.window = glfw.create_window(self.windowWidth, self.windowWidth, "Space Heist", None, None)
+        self.window = glfw.create_window(self.windowWidth, self.windowHeight, "Space Heist", None, None)
         # Pass 2nd last parameter as 'monitor' instead of None for fullscreen experience
 
         if not self.window:
@@ -69,6 +69,7 @@ class Window:
         
         inputs = {
             "1":False,
+            "2":False,
             "W":False,
             "S":False,
             "A":False,
@@ -76,6 +77,7 @@ class Window:
             "Q":False,
             "E":False,
             "SPACE":False,
+            "ENTER":False,
             "L_SHIFT":False,
             "R_CLICK":False,
             "L_CLICK":False,
@@ -84,6 +86,8 @@ class Window:
         
         if glfw.get_key(self.window, glfw.KEY_1) == glfw.PRESS:
             inputs["1"] = True
+        if glfw.get_key(self.window, glfw.KEY_2) == glfw.PRESS:
+            inputs["2"] = True
         if glfw.get_key(self.window, glfw.KEY_W) == glfw.PRESS:
             inputs["W"] = True
         if glfw.get_key(self.window, glfw.KEY_A) == glfw.PRESS:
@@ -98,6 +102,8 @@ class Window:
             inputs["E"] = True
         if glfw.get_key(self.window, glfw.KEY_SPACE) == glfw.PRESS:
             inputs["SPACE"] = True
+        if glfw.get_key(self.window, glfw.KEY_ENTER) == glfw.PRESS:
+            inputs["ENTER"] = True
         if glfw.get_key(self.window, glfw.KEY_LEFT_SHIFT) == glfw.PRESS:
             inputs["L_SHIFT"] = True
         if glfw.get_mouse_button(self.window, glfw.MOUSE_BUTTON_RIGHT) == glfw.PRESS:

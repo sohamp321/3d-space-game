@@ -179,7 +179,7 @@ def get_space_station():
     # vertices_reshaped = vertices.reshape(-1, 3)
     # num_vertices = vertices_reshaped.shape[0]
     # Create a colors array: for each vertex, assign a RGBA value.
-    colors = np.tile(np.array([0.812, 0.0, 1.0, 1.0], dtype=np.float32), num_vertices)
+    colors = np.tile(np.array([0, 0.961, 1.0, 1.0], dtype=np.float32), num_vertices)
     
     station_properties = {
         'positions': positions,
