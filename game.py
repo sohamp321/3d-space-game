@@ -2,7 +2,7 @@ import imgui
 import numpy as np
 from utils.graphics import Object, Camera, Shader
 from assets.shaders.shaders import object_shader, lighting_shader
-from assets.objects.objects import get_planet, get_space_station, get_transporter, rotation_matrix, get_pirates
+from assets.objects.objects import get_planet, get_space_station, get_transporter, rotation_matrix, get_pirates, get_laser
 import random
 from OpenGL.GL import *
 import copy
@@ -21,6 +21,9 @@ class Game:
         # Configure default parameters if needed
         self.fpp_camera.fov = 60
         self.active_camera = None
+        # Laser firing control:
+        self.laser_cooldown = 0.0  # seconds before next laser can be fired
+        self.laser_lifetime = 5.0  # seconds a laser remains active (optional)
 
     def InitScene(self):
         if self.screen == 1:
@@ -147,6 +150,36 @@ class Game:
                 pirate["scale"] = np.array([scale_val, scale_val, scale_val], dtype=np.float32)
                 self.objects["pirates"].append(Object(None, self.shaders[0], pirate))
             print(f"Spawned {len(self.objects['pirates'])} pirates.")
+            
+            # Initialize lasers list.
+            self.objects["lasers"] = []
+            self.laser_cooldown = 0.0
+            
+            
+    def fireLaser(self):
+        # ### LASER CODE: Spawn a laser in FPP mode.
+        # Only fire if active camera is FPP.
+        if self.active_camera != self.fpp_camera:
+            return
+        # Get transporter info.
+        transporter = self.objects["transporter"]
+        forward_spaceship = transporter.properties["orientation"] @ np.array([0, 0, -1], dtype=np.float32)
+        # Laser starts a bit in front of the ship.
+        laser_start = transporter.properties["position"] + forward_spaceship * 5.0
+        laser = get_laser()
+        laser["position"] = laser_start
+        # Set laser velocity (fast).
+        laser_speed = 300.0
+        laser["velocity"] = forward_spaceship * laser_speed
+        # Set laser scale small.
+        laser["scale"] = np.array([0.5, 0.5, 0.5], dtype=np.float32)
+        self.objects["lasers"].append(Object(None, self.shaders[0], laser))
+        #Set the lifetime property
+        laser["lifetime"] = 0
+        
+        
+
+        # after the lifetime has pased
             
     def ProcessFrame(self, inputs, time):
         # Start a single ImGui frame.
@@ -426,6 +459,13 @@ class Game:
                     self.active_camera = self.fpp_camera
                 else:
                     self.active_camera = self.camera
+                    
+                if self.laser_cooldown > 0:
+                    self.laser_cooldown -= delta
+                if self.active_camera == self.fpp_camera and inputs.get("L_CLICK") is True:
+                    if self.laser_cooldown <= 0:
+                        self.fireLaser()
+                        self.laser_cooldown = 0.5  # half-second cooldown
             
             # Update pirates.
             if "pirates" in self.objects:
@@ -441,10 +481,40 @@ class Game:
                         direction = np.zeros_like(direction)
                     # Move pirate toward ship
                     pirate_obj.properties["position"] += direction * pirate_speed * delta
+                    
+                if "lasers" in self.objects:
+                    lasers_to_remove = []
+                    for laser_obj in self.objects["lasers"]:
+                        # Simple update: position += velocity * delta
+                        if "velocity" in laser_obj.properties:
+                            laser_obj.properties["position"] += laser_obj.properties["velocity"] * delta
+                            # Optionally remove lasers after a certain lifetime or distance.
+                            # For now, if laser is beyond a distance threshold, mark for removal.
+                            if np.linalg.norm(laser_obj.properties["position"]) > 6000:
+                                lasers_to_remove.append(laser_obj)
+                        laser_obj.properties["lifetime"] += delta
+                        if laser_obj.properties["lifetime"] > self.laser_lifetime:
+                            lasers_to_remove.append(laser_obj)
+                    for l in lasers_to_remove:
+                        self.objects["lasers"].remove(l)
 
         elif self.screen in (2, 3):
             # Additional screens (YOU WON, GAME OVER) go here.
             pass
+        
+    def fireLaser(self):
+        # ### LASER CODE: Spawn a laser when fired.
+        if self.active_camera != self.fpp_camera:
+            return
+        transporter = self.objects["transporter"]
+        forward_spaceship = transporter.properties["orientation"] @ np.array([0, 0, -1], dtype=np.float32)
+        laser_start = transporter.properties["position"] + forward_spaceship * 5.0
+        laser = get_laser()
+        laser["position"] = laser_start
+        laser_speed = 300.0
+        laser["velocity"] = forward_spaceship * laser_speed
+        laser["scale"] = np.array([0.5, 0.5, 0.5], dtype=np.float32)
+        self.objects.setdefault("lasers", []).append(Object(None, self.shaders[0], laser))
 
     def DrawScene(self):
         if self.screen == 1:
@@ -482,6 +552,9 @@ class Game:
                 self.objects["transporter"].Draw()
             for pirate_obj in self.objects.get("pirates", []):
                 pirate_obj.Draw()
+            if "lasers" in self.objects:
+                for laser_obj in self.objects["lasers"]:
+                    laser_obj.Draw()
             # ### FPP Crosshair: If using FPP camera, draw a crosshair overlay.
             if self.active_camera == self.fpp_camera:
                 self.DrawCrosshair()

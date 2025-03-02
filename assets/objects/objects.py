@@ -281,28 +281,73 @@ def get_pirates():
     return pirate_properties
 
 
-def get_lasers():
+# def get_laser():
     
-    # Construct the path to your laser.obj file.
+#     # Construct the path to your laser.obj file.
+#     file_path = os.path.join(os.path.dirname(__file__), "models", "laser.obj")
+#     positions, normals = load_obj_with_normals(file_path)
+#     num_vertices = len(positions) // 3
+    
+#     # For simplicity, we'll assign a uniform color to all vertices (e.g. light gray).
+#     # vertices_reshaped = vertices.reshape(-1, 3)
+#     # num_vertices = vertices_reshaped.shape[0]
+#     # Create a colors array: for each vertex, assign a RGBA value.
+#     colors = np.tile(np.array([1.0, 0.0, 0.0, 1.0], dtype=np.float32), num_vertices)
+    
+#     laser_properties = {
+#         'positions': positions,
+#         'normals': normals,
+#         'colors': colors,
+#         'position': np.array([0, 0, 0], dtype=np.float32),  # default; will be updated in game.py
+#         'velocity': np.array([0, 0, 0], dtype=np.float32),
+#         'rotation': np.array([0, 0, 0], dtype=np.float32),
+#         'scale': np.array([0.5, 0.5, 0.5], dtype=np.float32),
+#         'color': np.array([1.0, 0.0, 0.0, 1.0], dtype=np.float32),
+#         'sens': 250,
+#     }
+#     return laser_properties
+
+
+def get_laser():
+    """
+    Returns a dictionary of properties for a laser object.
+    It first attempts to load an OBJ file (laser.obj) using load_obj_with_normals.
+    If that fails, it falls back to a simple thin rectangular prism as the laser geometry.
+    """
     file_path = os.path.join(os.path.dirname(__file__), "models", "laser.obj")
-    positions, normals = load_obj_with_normals(file_path)
+    try:
+        positions, normals = load_obj_with_normals(file_path)
+    except Exception as e:
+        print("Failed to load laser.obj, using fallback geometry:", e)
+        # Fallback geometry: a thin rectangular prism along the z-axis.
+        positions = np.array([
+            # Front face
+            -0.05, -0.05,  0.5,
+             0.05, -0.05,  0.5,
+             0.05,  0.05,  0.5,
+            -0.05,  0.05,  0.5,
+            # Back face
+            -0.05, -0.05, -0.5,
+             0.05, -0.05, -0.5,
+             0.05,  0.05, -0.5,
+            -0.05,  0.05, -0.5,
+        ], dtype=np.float32)
+        n_vertices = len(positions) // 3
+        normals = np.tile(np.array([0, 0, 1], dtype=np.float32), n_vertices)
+        
     num_vertices = len(positions) // 3
-    
-    # For simplicity, we'll assign a uniform color to all vertices (e.g. light gray).
-    # vertices_reshaped = vertices.reshape(-1, 3)
-    # num_vertices = vertices_reshaped.shape[0]
-    # Create a colors array: for each vertex, assign a RGBA value.
     colors = np.tile(np.array([1.0, 0.0, 0.0, 1.0], dtype=np.float32), num_vertices)
     
     laser_properties = {
         'positions': positions,
         'normals': normals,
         'colors': colors,
-        'position': np.array([0, 0, 0], dtype=np.float32),  # default; will be updated in game.py
-        'velocity': np.array([0, 0, 0], dtype=np.float32),
+        'position': np.array([0, 0, 0], dtype=np.float32),  # Will be set when fired.
+        'velocity': np.array([0, 0, 0], dtype=np.float32),  # Set by firing logic.
         'rotation': np.array([0, 0, 0], dtype=np.float32),
         'scale': np.array([0.5, 0.5, 0.5], dtype=np.float32),
         'color': np.array([1.0, 0.0, 0.0, 1.0], dtype=np.float32),
         'sens': 250,
+        'lifetime': 0.0,
     }
     return laser_properties
