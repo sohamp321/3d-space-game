@@ -19,7 +19,8 @@ class Game:
         self.objects = {}
         self.fpp_camera = Camera(self.height, self.width)
         # Configure default parameters if needed
-        self.fpp_camera.fov = 75
+        self.fpp_camera.fov = 60
+        self.active_camera = None
 
     def InitScene(self):
         if self.screen == 1:
@@ -34,6 +35,7 @@ class Game:
                 self.camera.far = 10000.0
             setCamera()
 
+            self.active_camera = self.camera
             # Set world limits
             def setWorldLimits():
                 self.worldMin = np.array([-5000, -5000, -5000], dtype=np.float32)
@@ -124,20 +126,27 @@ class Game:
             self.fpp_camera.up = np.array([0, 1, 0], dtype=np.float32)
 
             # Initialize pirates.
+            # Spawn Pirates at random positions (ensuring they are far enough from the ship).
             self.n_pirates = 20 
             self.objects["pirates"] = []
+            min_pirate_distance = 300
+            ship_pos = self.objects["transporter"].properties["position"]
             for i in range(self.n_pirates):
-                pos = np.array([
-                    np.random.uniform(self.worldMin[0], self.worldMax[0]),
-                    np.random.uniform(self.worldMin[1], self.worldMax[1]),
-                    np.random.uniform(self.worldMin[2], self.worldMax[2])
-                ], dtype=np.float32)
+                valid_spawn = False
+                while not valid_spawn:
+                    pos = np.array([
+                        np.random.uniform(self.worldMin[0], self.worldMax[0]),
+                        np.random.uniform(self.worldMin[1], self.worldMax[1]),
+                        np.random.uniform(self.worldMin[2], self.worldMax[2])
+                    ], dtype=np.float32)
+                    if np.linalg.norm(pos - ship_pos) > min_pirate_distance:
+                        valid_spawn = True
                 pirate = get_pirates()
                 pirate["position"] = pos
-                # Optionally, randomize scale
-                scale_val = np.random.uniform(10, 15)
+                scale_val = random.uniform(10, 15)
                 pirate["scale"] = np.array([scale_val, scale_val, scale_val], dtype=np.float32)
                 self.objects["pirates"].append(Object(None, self.shaders[0], pirate))
+            print(f"Spawned {len(self.objects['pirates'])} pirates.")
             
     def ProcessFrame(self, inputs, time):
         # Start a single ImGui frame.
@@ -208,6 +217,7 @@ class Game:
             delta = time["deltaTime"]
             theta = 0.4 * delta
 
+            # Create a minimap window to show the direction to the target planet.
             if hasattr(self, 'target_planet') and self.objects.get("transporter") is not None:
                 # Set up minimap window
                 arrow_window_size = 150
@@ -346,6 +356,8 @@ class Game:
                 
                 imgui.end()
                 
+                
+            # GAME WON : Check if transporter has reached the target planet.
             transporter_pos = self.objects["transporter"].properties["position"]
             target_pos = self.target_station.properties["position"]
             if np.linalg.norm(transporter_pos - target_pos) < 5:  # threshold distance
@@ -353,6 +365,7 @@ class Game:
                 self.screen = 2  # Switch to Game Won screen
                 return
             
+            # GAME OVER : Check if transporter has been caught by a pirate.
             ship_pos = transporter_pos
             for pirate_obj in self.objects.get("pirates", []):
                 pirate_pos = pirate_obj.properties["position"]
@@ -403,7 +416,18 @@ class Game:
                 self.camera.up = up_spaceship
                 self.camera.position = copy.deepcopy(transporter.properties["position"]) - (5 * forward_spaceship) + up_spaceship
                 
-                
+                # Switch between cameras
+                if inputs.get("R_CLICK") is True:
+                    # Use FPP camera.
+                    forward_offset = 10.0  # distance in front of ship
+                    self.fpp_camera.position = transporter.properties["position"] + forward_spaceship * forward_offset
+                    self.fpp_camera.lookAt = self.fpp_camera.position + forward_spaceship
+                    self.fpp_camera.up = np.array([0, 1, 0], dtype=np.float32)
+                    self.active_camera = self.fpp_camera
+                else:
+                    self.active_camera = self.camera
+            
+            # Update pirates.
             if "pirates" in self.objects:
                 pirate_speed = 50.0  # adjust speed as needed
                 ship_pos = self.objects["transporter"].properties["position"]
@@ -424,12 +448,29 @@ class Game:
 
     def DrawScene(self):
         if self.screen == 1:
+            # for shader in self.shaders:
+            #     self.camera.Update(shader)
+            #     lightPosLocation = glGetUniformLocation(shader.ID, "lightPos".encode('utf-8'))
+            #     glUniform3f(lightPosLocation, 100.0, 100.0, 100.0)
+            #     viewPosLocation = glGetUniformLocation(shader.ID, "viewPos".encode('utf-8'))
+            #     glUniform3f(viewPosLocation, self.camera.position[0], self.camera.position[1], self.camera.position[2])
+            #     glUniform1f(glGetUniformLocation(shader.ID, "ambientStrength".encode('utf-8')), 0.3)
+            #     glUniform1f(glGetUniformLocation(shader.ID, "specularStrength".encode('utf-8')), 0.8)
+            #     glUniform1f(glGetUniformLocation(shader.ID, "shininess".encode('utf-8')), 64.0)
+            # for planet_obj in self.objects.get("planets", []):
+            #     planet_obj.Draw()
+            # for station_obj in self.objects.get("stations", []):
+            #     station_obj.Draw()
+            # if self.objects.get("transporter") is not None:
+            #     self.objects["transporter"].Draw()
+            # for pirate_obj in self.objects.get("pirates", []):
+            #     pirate_obj.Draw()
             for shader in self.shaders:
-                self.camera.Update(shader)
+                self.active_camera.Update(shader)
                 lightPosLocation = glGetUniformLocation(shader.ID, "lightPos".encode('utf-8'))
                 glUniform3f(lightPosLocation, 100.0, 100.0, 100.0)
                 viewPosLocation = glGetUniformLocation(shader.ID, "viewPos".encode('utf-8'))
-                glUniform3f(viewPosLocation, self.camera.position[0], self.camera.position[1], self.camera.position[2])
+                glUniform3f(viewPosLocation, self.active_camera.position[0], self.active_camera.position[1], self.active_camera.position[2])
                 glUniform1f(glGetUniformLocation(shader.ID, "ambientStrength".encode('utf-8')), 0.3)
                 glUniform1f(glGetUniformLocation(shader.ID, "specularStrength".encode('utf-8')), 0.8)
                 glUniform1f(glGetUniformLocation(shader.ID, "shininess".encode('utf-8')), 64.0)
@@ -441,3 +482,19 @@ class Game:
                 self.objects["transporter"].Draw()
             for pirate_obj in self.objects.get("pirates", []):
                 pirate_obj.Draw()
+            # ### FPP Crosshair: If using FPP camera, draw a crosshair overlay.
+            if self.active_camera == self.fpp_camera:
+                self.DrawCrosshair()
+
+    def DrawCrosshair(self):
+        # Draw a simple crosshair in the center of the screen.
+        draw_list = imgui.get_foreground_draw_list()
+        center_x = self.width / 2
+        center_y = self.height / 2
+        size = 10  # half-length of crosshair lines
+        color = imgui.get_color_u32_rgba(1.0, 1.0, 1.0, 1.0)  # white
+        thickness = 2.0
+        # Horizontal line.
+        draw_list.add_line(center_x - size, center_y, center_x + size, center_y, color, thickness)
+        # Vertical line.
+        draw_list.add_line(center_x, center_y - size, center_x, center_y + size, color, thickness)
