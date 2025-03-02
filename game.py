@@ -624,10 +624,10 @@ class Game:
             # Update menu selection from inputs.
             if inputs.get("1") is True:
                 self.menu_selection = 1
-                print("Menu: New Game selected")
+                # print("Menu: New Game selected")
             if inputs.get("2") is True:
                 self.menu_selection = 2
-                print("Menu: Exit selected")
+                # print("Menu: Exit selected")
             # Confirm selection on ENTER.
             if inputs.get("ENTER") is True:
                 print(f"ENTER pressed, menu selection: {self.menu_selection}")
@@ -644,57 +644,410 @@ class Game:
             delta = time["deltaTime"]
             theta = 0.4 * delta
 
+                # Draw minimap arrow.
             # Draw minimap arrow.
-            if hasattr(self, 'target_station') and self.objects.get("transporter") is not None:
-                arrow_window_size = 120
+            # if hasattr(self, 'target_station') and self.objects.get("transporter") is not None:
+            #     # Set up minimap window parameters.
+            #     arrow_window_size = 150
+            #     arrow_padding = 10
+            #     minimap_x = self.width - arrow_window_size - arrow_padding
+            #     minimap_y = self.height - arrow_window_size - arrow_padding - 100  # Adjust vertical offset as needed
+
+            #     # We compute center from the known minimap values.
+            #     center_x = minimap_x + arrow_window_size / 2
+            #     center_y = minimap_y + arrow_window_size / 2
+
+            #     imgui.set_next_window_position(minimap_x, minimap_y)
+            #     imgui.set_next_window_size(arrow_window_size, arrow_window_size)
+            #     imgui.begin("##MiniMap", False, 
+            #                 imgui.WINDOW_NO_TITLE_BAR | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_SCROLLBAR)
+
+            #     # Get positions from transporter and target.
+            #     transporter_pos = self.objects["transporter"].properties["position"]
+            #     target_pos = self.target_planet.properties["position"]
+            #     direction = target_pos - transporter_pos
+
+            #     # Debug: show raw direction components.
+            #     imgui.text(f"Dir: {direction[0]:.1f}, {direction[1]:.1f}, {direction[2]:.1f}")
+
+            #     # Compute XY projection.
+            #     direction_xy = np.array([direction[0], direction[1]])
+            #     norm = np.linalg.norm(direction_xy)
+            #     imgui.text(f"Norm: {norm:.2f}")
+            #     if norm > 0.001:
+            #         direction_xy = direction_xy / norm
+            #     else:
+            #         direction_xy = np.array([0.0, -1.0])  # Default to up if too close
+
+            #     # Compute angle from the positive X axis.
+            #     raw_angle = np.arctan2(direction_xy[1], direction_xy[0])
+            #     # Adjust the angle so that the arrow (which by default points upward, i.e. along (0, -1)) rotates correctly.
+            #     arrow_rotation = raw_angle + np.pi/2
+
+            #     imgui.text(f"Angle: {arrow_rotation:.2f}")
+
+            #     # Set arrow color based on elevation difference.
+            #     elevation_diff = target_pos[2] - transporter_pos[2]
+            #     if abs(elevation_diff) < 3.0:
+            #         arrow_color = (0.0, 1.0, 0.0, 1.0)  # Bright green
+            #     elif elevation_diff > 0:
+            #         arrow_color = (1.0, 0.0, 0.0, 1.0)  # Bright red
+            #     else:
+            #         arrow_color = (0.0, 0.0, 1.0, 1.0)  # Bright blue
+
+            #     # Define a larger arrow.
+            #     arrow_size = 50
+
+            #     # Define arrow triangle in local coordinates (default arrow points upward).
+            #     # p1 is the tip, p2 and p3 are the base vertices.
+            #     p1 = (0, -arrow_size / 2)
+            #     p2 = (-arrow_size / 3, arrow_size / 2)
+            #     p3 = (arrow_size / 3, arrow_size / 2)
+
+            #     def rotate_point(p, angle):
+            #         c = np.cos(angle)
+            #         s = np.sin(angle)
+            #         return (p[0] * c - p[1] * s, p[0] * s + p[1] * c)
+
+            #     # Rotate each point by the adjusted angle.
+            #     p1r = rotate_point(p1, arrow_rotation)
+            #     p2r = rotate_point(p2, arrow_rotation)
+            #     p3r = rotate_point(p3, arrow_rotation)
+
+            #     # Translate the rotated points to screen coordinates.
+            #     p1_screen = (center_x + p1r[0], center_y + p1r[1])
+            #     p2_screen = (center_x + p2r[0], center_y + p2r[1])
+            #     p3_screen = (center_x + p3r[0], center_y + p3r[1])
+
+            #     # Debug: print arrow vertices.
+            #     imgui.text(f"P1: {p1_screen[0]:.1f}, {p1_screen[1]:.1f}")
+            #     imgui.text(f"P2: {p2_screen[0]:.1f}, {p2_screen[1]:.1f}")
+            #     imgui.text(f"P3: {p3_screen[0]:.1f}, {p3_screen[1]:.1f}")
+
+            #     # Draw a circular background for the minimap.
+            #     draw_list = imgui.get_window_draw_list()
+            #     draw_list.add_circle_filled(center_x, center_y, arrow_window_size/2 - 10, 
+            #                                 imgui.get_color_u32_rgba(0.2, 0.2, 0.2, 0.7))
+            #     # Draw a dot at the center.
+            #     draw_list.add_circle_filled(center_x, center_y, 5, 
+            #                                 imgui.get_color_u32_rgba(1.0, 1.0, 1.0, 1.0))
+            #     # Draw the arrow.
+            #     draw_list.add_triangle_filled(
+            #         p1_screen[0], p1_screen[1],
+            #         p2_screen[0], p2_screen[1],
+            #         p3_screen[0], p3_screen[1],
+            #         imgui.get_color_u32_rgba(*arrow_color)
+            #     )
+            #     # Draw the arrow outline.
+            #     draw_list.add_triangle(
+            #         p1_screen[0], p1_screen[1],
+            #         p2_screen[0], p2_screen[1],
+            #         p3_screen[0], p3_screen[1],
+            #         imgui.get_color_u32_rgba(1.0, 1.0, 1.0, 1.0),
+            #         2.0
+            #     )
+
+            #     # Display the distance.
+            #     distance = np.linalg.norm(direction)
+            #     imgui.text(f"Distance: {distance:.1f}")
+
+            #     imgui.end()
+            
+            
+            def DrawMinimapArrow(self):
+                """
+                Draw a 2D arrow on the background (top–right corner) pointing toward the target,
+                calculated in the transporter's local space.
+                """
+                # Ensure we have both transporter and target
+                if self.objects.get("transporter") is None or not hasattr(self, "target_planet"):
+                    return
+
+                # Get positions
+                transporter = self.objects["transporter"]
+                player_pos = transporter.properties["position"]
+                destination_pos = self.target_planet.properties["position"]
+                
+                # Ensure transporter orientation is available.
+                if "orientation" not in transporter.properties:
+                    # You might want to update it here if not already set.
+                    t_rot = transporter.properties.get("rotation", np.array([0,0,0], dtype=np.float32))
+                    transporter.properties["orientation"] = rotation_matrix(t_rot[0], t_rot[1], t_rot[2])
+                orientation = transporter.properties["orientation"]
+
+                # Compute the local orientation axes from the transporter's orientation matrix.
+                # (Assuming standard basis: forward is (0,0,-1), right is (1,0,0), up is (0,1,0))
+                forward_dir = orientation @ np.array([0, 0, -1], dtype=np.float32)
+                right_dir   = orientation @ np.array([1, 0, 0], dtype=np.float32)
+                up_dir      = orientation @ np.array([0, 1, 0], dtype=np.float32)
+
+                # Calculate vector from player to destination (world space)
+                world_direction = destination_pos - player_pos
+                distance = np.linalg.norm(world_direction)
+                if distance < 10:
+                    return  # Skip arrow drawing if too close
+                if distance > 0:
+                    world_direction = world_direction / distance
+
+                # Transform world direction to transporter's local space via dot products.
+                local_forward = np.dot(world_direction, forward_dir)
+                local_right   = np.dot(world_direction, right_dir)
+                local_up      = np.dot(world_direction, up_dir)
+
+                # Calculate angle in player's local XY plane (forward-right plane).
+                # Using -local_right so that a positive forward gives 0 radians (pointing up).
+                angle = np.arctan2(-local_right, local_forward)
+
+                # Fixed screen position (top–right corner)
+                pos_x = self.width - 80
+                pos_y = 80
+
+                # Get the background draw list (drawn behind all windows)
+                draw_list = imgui.get_background_draw_list()
+
+                # Draw background circle
+                circle_radius = 50
+                bg_color = imgui.get_color_u32_rgba(0.0, 0.0, 0.0, 0.5)  # Semi-transparent black
+                draw_list.add_circle_filled(pos_x, pos_y, circle_radius, bg_color)
+                border_color = imgui.get_color_u32_rgba(1.0, 1.0, 1.0, 0.7)  # White border
+                draw_list.add_circle(pos_x, pos_y, circle_radius, border_color, 16, 1.5)
+
+                # Draw forward indicator (always points up to indicate player's forward)
+                forward_length = 15.0
+                forward_color = imgui.get_color_u32_rgba(0.7, 0.7, 0.7, 0.6)
+                draw_list.add_line(pos_x, pos_y, pos_x, pos_y - forward_length, forward_color, 1.0)
+                draw_list.add_text(pos_x - 5, pos_y - forward_length - 12, forward_color, "F")
+
+                # Arrow dimensions (from reference code)
+                arrow_length = 35.0  # Total length of arrow
+                head_length = 15.0   # Length of arrow head
+                arrow_width = 8.0    # Width of arrow shaft
+                head_width = 18.0    # Width of arrow head at its base
+
+                # Calculate arrow points based on angle.
+                sin_angle = np.sin(angle)
+                cos_angle = np.cos(angle)
+
+                # Arrow tip (head point)
+                tip_x = pos_x + arrow_length * sin_angle
+                tip_y = pos_y - arrow_length * cos_angle  # screen Y increases downward
+
+                # Base of arrow head (where it meets the shaft)
+                head_base_x = pos_x + (arrow_length - head_length) * sin_angle
+                head_base_y = pos_y - (arrow_length - head_length) * cos_angle
+
+                # Arrow shaft start point (tail)
+                tail_x = pos_x - 0.5 * (arrow_length/3 * sin_angle)
+                tail_y = pos_y + 0.5 * (arrow_length/3 * cos_angle)
+
+                # Calculate perpendicular direction for width
+                perp_x = cos_angle
+                perp_y = sin_angle
+
+                # Points for arrow head (triangle)
+                left_corner_x = head_base_x + head_width/2 * perp_x
+                left_corner_y = head_base_y + head_width/2 * perp_y
+                right_corner_x = head_base_x - head_width/2 * perp_x
+                right_corner_y = head_base_y - head_width/2 * perp_y
+
+                # Points for arrow shaft (rectangle)
+                shaft_left_top_x = head_base_x + arrow_width/2 * perp_x
+                shaft_left_top_y = head_base_y + arrow_width/2 * perp_y
+                shaft_right_top_x = head_base_x - arrow_width/2 * perp_x
+                shaft_right_top_y = head_base_y - arrow_width/2 * perp_y
+                shaft_left_bottom_x = tail_x + arrow_width/2 * perp_x
+                shaft_left_bottom_y = tail_y + arrow_width/2 * perp_y
+                shaft_right_bottom_x = tail_x - arrow_width/2 * perp_x
+                shaft_right_bottom_y = tail_y - arrow_width/2 * perp_y
+
+                # For arrow color, mimic reference logic (using local_forward to choose color)
+                if local_forward > 0:
+                    # Destination is in front of player: green to yellow.
+                    g = min(1.0, 0.8 + 0.2 * local_forward)
+                    r = min(1.0, (1.0 - local_forward) + distance / 10000.0)
+                    b = 0.2
+                else:
+                    # Destination is behind player: blue to purple.
+                    b = min(1.0, 0.8 - 0.2 * local_forward)
+                    r = min(1.0, abs(local_forward) + distance / 10000.0)
+                    g = 0.2
+                arrow_color = imgui.get_color_u32_rgba(r, g, b, 1.0)
+
+                # Draw the arrow head (triangle)
+                draw_list.add_triangle_filled(
+                    tip_x, tip_y,
+                    left_corner_x, left_corner_y,
+                    right_corner_x, right_corner_y,
+                    arrow_color
+                )
+                # Draw the arrow shaft (rectangle)
+                draw_list.add_quad_filled(
+                    shaft_left_top_x, shaft_left_top_y,
+                    shaft_right_top_x, shaft_right_top_y,
+                    shaft_right_bottom_x, shaft_right_bottom_y,
+                    shaft_left_bottom_x, shaft_left_bottom_y,
+                    arrow_color
+                )
+                # Draw outlines for better visibility
+                outline_color = imgui.get_color_u32_rgba(1.0, 1.0, 1.0, 0.7)
+                draw_list.add_triangle(
+                    tip_x, tip_y,
+                    left_corner_x, left_corner_y,
+                    right_corner_x, right_corner_y,
+                    outline_color, 1.0
+                )
+                draw_list.add_quad(
+                    shaft_left_top_x, shaft_left_top_y,
+                    shaft_right_top_x, shaft_right_top_y,
+                    shaft_right_bottom_x, shaft_right_bottom_y,
+                    shaft_left_bottom_x, shaft_left_bottom_y,
+                    outline_color, 1.0
+                )
+
+                # Display distance text below the minimap.
+                draw_list.add_text(pos_x - 20, pos_y + circle_radius + 5, 
+                       imgui.get_color_u32_rgba(1.0, 1.0, 1.0, 1.0), f"{int(distance)}u")
+                
+                
+            # DrawMinimapArrow(self)
+            
+            # Draw minimap arrow using error angle between target direction and ship's look.
+            if hasattr(self, 'target_planet') and self.objects.get("transporter") is not None:
+                # Set up minimap window
+                arrow_window_size = 150
                 arrow_padding = 10
                 minimap_x = self.width - arrow_window_size - arrow_padding
-                minimap_y = self.height - arrow_window_size - arrow_padding
-
-                imgui.set_next_window_position(minimap_x, minimap_y)
-                imgui.set_next_window_size(arrow_window_size, arrow_window_size)
-                imgui.begin("##MiniMap", False, imgui.WINDOW_NO_TITLE_BAR | imgui.WINDOW_NO_RESIZE | imgui.WINDOW_NO_SCROLLBAR)
+                minimap_y = arrow_padding
                 center_x = minimap_x + arrow_window_size / 2
                 center_y = minimap_y + arrow_window_size / 2
 
-                transporter_pos = self.objects["transporter"].properties["position"]
-                target_pos = self.target_station.properties["position"]
-                direction = target_pos - transporter_pos
-                direction_xy = np.array([direction[0], direction[1]])
-                if np.linalg.norm(direction_xy) > 0.001:
-                    direction_xy = direction_xy / np.linalg.norm(direction_xy)
-                elevation_diff = target_pos[2] - transporter_pos[2]
-                if abs(elevation_diff) < 3.0:
-                    arrow_color = (1.0, 1.0, 1.0, 1.0)
-                elif elevation_diff > 0:
-                    arrow_color = (1.0, 0.2, 0.2, 1.0)
+                imgui.set_next_window_position(minimap_x, minimap_y)
+                imgui.set_next_window_size(arrow_window_size, arrow_window_size)
+                imgui.begin("##MiniMap", False, 
+                        imgui.WINDOW_NO_TITLE_BAR | 
+                        imgui.WINDOW_NO_RESIZE | 
+                        imgui.WINDOW_NO_SCROLLBAR)
+
+                # Get transporter and target positions
+                transporter = self.objects["transporter"]
+                ship_pos = transporter.properties["position"]
+                target_pos = self.target_planet.properties["position"]
+                
+                # Calculate world direction vector from ship to target
+                direction = target_pos - ship_pos
+                distance = np.linalg.norm(direction)
+                
+                # Get the ship's orientation
+                if "orientation" not in transporter.properties:
+                    t_rot = transporter.properties.get("rotation", np.zeros(3, dtype=np.float32))
+                    transporter.properties["orientation"] = rotation_matrix(t_rot[0], t_rot[1], t_rot[2])
+                
+                # Get the ship's forward and up vectors in world space
+                forward = transporter.properties["orientation"] @ np.array([0, 0, -1], dtype=np.float32)
+                right = transporter.properties["orientation"] @ np.array([1, 0, 0], dtype=np.float32)
+                
+                # Project vectors to XY plane and normalize
+                direction_xy = np.array([direction[0], direction[1]], dtype=np.float32)
+                forward_xy = np.array([forward[0], forward[1]], dtype=np.float32)
+                
+                # Normalize if possible
+                dir_norm = np.linalg.norm(direction_xy)
+                if dir_norm > 0.001:
+                    direction_xy /= dir_norm
                 else:
-                    arrow_color = (0.2, 0.2, 1.0, 1.0)
-                angle = np.arctan2(direction_xy[1], direction_xy[0])
-                arrow_size = 30
-                # Define arrow triangle points (centered at origin, pointing up)
-                p1 = (0, -arrow_size / 2)
-                p2 = (-arrow_size / 4, arrow_size / 2)
-                p3 = (arrow_size / 4, arrow_size / 2)
+                    direction_xy = np.array([0, 1], dtype=np.float32)
+                    
+                fwd_norm = np.linalg.norm(forward_xy)
+                if fwd_norm > 0.001:
+                    forward_xy /= fwd_norm
+                else:
+                    forward_xy = np.array([0, 1], dtype=np.float32)
+                
+                # Calculate angle between forward and direction vectors using dot and cross products
+                dot_product = np.dot(forward_xy, direction_xy)
+                cross_product = np.cross([forward_xy[0], forward_xy[1], 0], [direction_xy[0], direction_xy[1], 0])[2]
+                
+                # Use atan2 to get the angle (-π to π)
+                error_angle = np.arctan2(cross_product, dot_product)
+                
+                # Display debug info
+                imgui.text(f"Distance: {distance:.1f}")
+                imgui.text(f"Angle: {error_angle:.2f} rad")
+                
+                # Define arrow geometry (pointing up by default)
+                arrow_size = 50
+                p1 = (0, -arrow_size / 2)      # Tip
+                p2 = (-arrow_size / 3, arrow_size / 2)  # Bottom left
+                p3 = (arrow_size / 3, arrow_size / 2)   # Bottom right
+                
+                # Rotate by error angle
                 def rotate_point(p, angle):
-                    c = np.cos(angle - np.pi / 2)
-                    s = np.sin(angle - np.pi / 2)
+                    c, s = np.cos(angle), np.sin(angle)
                     return (p[0] * c - p[1] * s, p[0] * s + p[1] * c)
-                p1r = rotate_point(p1, angle)
-                p2r = rotate_point(p2, angle)
-                p3r = rotate_point(p3, angle)
+                
+                p1r = rotate_point(p1, error_angle)
+                p2r = rotate_point(p2, error_angle)
+                p3r = rotate_point(p3, error_angle)
+                
+                # Convert to screen coordinates
                 p1_screen = (center_x + p1r[0], center_y + p1r[1])
                 p2_screen = (center_x + p2r[0], center_y + p2r[1])
                 p3_screen = (center_x + p3r[0], center_y + p3r[1])
+                
+                # Draw background
                 draw_list = imgui.get_window_draw_list()
+                
+                # Draw background circle
+                draw_list.add_circle_filled(
+                    center_x, center_y, 
+                    arrow_window_size/2 - 10,
+                    imgui.get_color_u32_rgba(0.1, 0.1, 0.1, 0.8)
+                )
+                
+                # Draw center reference dot
+                draw_list.add_circle_filled(
+                    center_x, center_y, 
+                    5, 
+                    imgui.get_color_u32_rgba(0.7, 0.7, 0.7, 0.7)
+                )
+                
+                # Set arrow color based on altitude difference
+                elevation_diff = target_pos[2] - ship_pos[2]
+                if abs(elevation_diff) < 5.0:
+                    # Target is at same level (green)
+                    arrow_color = (0.0, 1.0, 0.0, 1.0)
+                elif elevation_diff > 0:
+                    # Target is above (red)
+                    arrow_color = (1.0, 0.2, 0.2, 1.0)
+                else:
+                    # Target is below (blue)
+                    arrow_color = (0.2, 0.2, 1.0, 1.0)
+                
+                # Draw arrow
                 draw_list.add_triangle_filled(
                     p1_screen[0], p1_screen[1],
                     p2_screen[0], p2_screen[1],
                     p3_screen[0], p3_screen[1],
                     imgui.get_color_u32_rgba(*arrow_color)
                 )
-                distance = np.linalg.norm(direction)
-                imgui.text(f"Distance: {distance:.1f}")
+                
+                # Draw arrow outline
+                draw_list.add_triangle(
+                    p1_screen[0], p1_screen[1],
+                    p2_screen[0], p2_screen[1],
+                    p3_screen[0], p3_screen[1],
+                    imgui.get_color_u32_rgba(1.0, 1.0, 1.0, 1.0),
+                    1.5
+                )
+                
+                # Show distance as text
+                draw_list.add_text(
+                    center_x - 20, 
+                    center_y + arrow_window_size/2 - 20,
+                    imgui.get_color_u32_rgba(1.0, 1.0, 1.0, 1.0), 
+                    f"{int(distance)}u"
+                )
+                
                 imgui.end()
 
             # Update station orbits.
