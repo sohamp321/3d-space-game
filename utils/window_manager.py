@@ -25,7 +25,7 @@ class Window:
         # self.windowHeight = 1000
         # self.windowWidth = 1000
 
-        self.window = glfw.create_window(self.windowWidth, self.windowHeight, "Space Heist", None, None)
+        self.window = glfw.create_window(self.windowWidth, self.windowHeight, "Space Heist", monitor, None)
         # Pass 2nd last parameter as 'monitor' instead of None for fullscreen experience
 
         if not self.window:

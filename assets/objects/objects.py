@@ -243,3 +243,39 @@ def get_transporter():
         'speed': 0.05
     }
     return transporter_properties
+
+
+def get_pirates():
+    """
+    Returns a dictionary of properties for a pirate object.
+    The dictionary can be passed to the Object constructor in your game.
+    """
+    # Construct the file path to the pirate model.
+    file_path = os.path.join(os.path.dirname(__file__), "models", "pirate.obj")
+    try:
+        positions, normals = load_obj_with_normals(file_path)
+    except Exception as e:
+        # If the file is not found, create a simple sphere as a fallback.
+        positions, indices = create_sphere(1.0, 16)  # You might need to import create_sphere
+        # For normals, we'll simply use a default.
+        n_vertices = len(positions) // 3
+        normals = np.tile(np.array([0, 0, 1], dtype=np.float32), n_vertices)
+    
+    # Determine the number of vertices.
+    num_vertices = len(positions) // 3
+
+    # Create a uniform color for the pirate (e.g., dark red).
+    colors = np.tile(np.array([0.6, 0.1, 0.1, 1.0], dtype=np.float32), num_vertices)
+
+    pirate_properties = {
+        'positions': positions,
+        'normals': normals,
+        'colors': colors,
+        'position': np.array([0, 0, 0], dtype=np.float32),
+        'velocity': np.array([0, 0, 0], dtype=np.float32),
+        'rotation': np.array([0, 0, 0], dtype=np.float32),
+        'scale': np.array([1, 1, 1], dtype=np.float32),
+        'color': np.array([0.6, 0.1, 0.1, 1.0], dtype=np.float32),
+        'sens': 250,
+    }
+    return pirate_properties
