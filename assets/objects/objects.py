@@ -308,46 +308,180 @@ def get_pirates():
 #     return laser_properties
 
 
-def get_laser():
-    """
-    Returns a dictionary of properties for a laser object.
-    It first attempts to load an OBJ file (laser.obj) using load_obj_with_normals.
-    If that fails, it falls back to a simple thin rectangular prism as the laser geometry.
-    """
-    file_path = os.path.join(os.path.dirname(__file__), "models", "laser.obj")
-    try:
-        positions, normals = load_obj_with_normals(file_path)
-    except Exception as e:
-        print("Failed to load laser.obj, using fallback geometry:", e)
-        # Fallback geometry: a thin rectangular prism along the z-axis.
-        positions = np.array([
-            # Front face
-            -0.05, -0.05,  0.5,
-             0.05, -0.05,  0.5,
-             0.05,  0.05,  0.5,
-            -0.05,  0.05,  0.5,
-            # Back face
-            -0.05, -0.05, -0.5,
-             0.05, -0.05, -0.5,
-             0.05,  0.05, -0.5,
-            -0.05,  0.05, -0.5,
-        ], dtype=np.float32)
-        n_vertices = len(positions) // 3
-        normals = np.tile(np.array([0, 0, 1], dtype=np.float32), n_vertices)
+# def get_laser():
+#     """
+#     Returns a dictionary of properties for a laser object.
+#     It first attempts to load an OBJ file (laser.obj) using load_obj_with_normals.
+#     If that fails, it falls back to a simple thin rectangular prism as the laser geometry.
+#     """
+#     file_path = os.path.join(os.path.dirname(__file__), "models", "laser.obj")
+#     try:
+#         positions, normals = load_obj_with_normals(file_path)
+#     except Exception as e:
+#         print("Failed to load laser.obj, using fallback geometry:", e)
+#         # Fallback geometry: a thin rectangular prism along the z-axis.
+#         positions = np.array([
+#             # Front face
+#             -0.05, -0.05,  0.5,
+#              0.05, -0.05,  0.5,
+#              0.05,  0.05,  0.5,
+#             -0.05,  0.05,  0.5,
+#             # Back face
+#             -0.05, -0.05, -0.5,
+#              0.05, -0.05, -0.5,
+#              0.05,  0.05, -0.5,
+#             -0.05,  0.05, -0.5,
+#         ], dtype=np.float32)
+#         n_vertices = len(positions) // 3
+#         normals = np.tile(np.array([0, 0, 1], dtype=np.float32), n_vertices)
         
-    num_vertices = len(positions) // 3
-    colors = np.tile(np.array([1.0, 0.0, 0.0, 1.0], dtype=np.float32), num_vertices)
+#     num_vertices = len(positions) // 3
+#     colors = np.tile(np.array([1.0, 0.0, 0.0, 1.0], dtype=np.float32), num_vertices)
     
+#     laser_properties = {
+#         'positions': positions,
+#         'normals': normals,
+#         'colors': colors,
+#         'position': np.array([0, 0, 0], dtype=np.float32),  # Will be set when fired.
+#         'velocity': np.array([0, 0, 0], dtype=np.float32),  # Set by firing logic.
+#         'rotation': np.array([0, 0, 0], dtype=np.float32),
+#         'scale': np.array([0.5, 0.5, 0.5], dtype=np.float32),
+#         'color': np.array([1.0, 0.0, 0.0, 1.0], dtype=np.float32),
+#         'sens': 250,
+#         'lifetime': 0.0,
+#     }
+#     return laser_properties
+
+
+def get_laser():
+    """Create a laser object by properly loading the laser.obj file"""
+    try:
+        # Get file path
+        file_path = os.path.join(os.path.dirname(__file__), "models", "laser.obj")
+        
+        # Load vertices from OBJ file
+        vertices = []
+        faces = []
+        
+        with open(file_path, 'r') as f:
+            for line in f:
+                if line.startswith('v '):  # Vertex position
+                    parts = line.split()
+                    vertices.append([float(parts[1]), float(parts[2]), float(parts[3])])
+                elif line.startswith('f '):  # Face
+                    # Simple face indices without texture/normal - just grab the vertex indices
+                    parts = line.split()
+                    # Convert to 0-indexed (OBJ is 1-indexed)
+                    face = [int(parts[1])-1, int(parts[2])-1, int(parts[3])-1]
+                    faces.append(face)
+        
+        # Convert vertices to flat array for positions
+        positions = []
+        for face in faces:
+            # Add each vertex of the face to positions
+            for vertex_idx in face:
+                vertex = vertices[vertex_idx]
+                positions.extend(vertex)
+        
+        positions = np.array(positions, dtype=np.float32)
+        
+        # Calculate simple normals based on face orientation
+        normals = []
+        for face in faces:
+            # Get three vertices of the face
+            v0 = np.array(vertices[face[0]])
+            v1 = np.array(vertices[face[1]])
+            v2 = np.array(vertices[face[2]])
+            
+            # Calculate face normal using cross product
+            edge1 = v1 - v0
+            edge2 = v2 - v0
+            normal = np.cross(edge1, edge2)
+            
+            # Normalize
+            length = np.linalg.norm(normal)
+            if length > 0.0001:
+                normal = normal / length
+            else:
+                normal = np.array([0, 0, 1])
+                
+            # Add the normal for each vertex in the face
+            for _ in range(3):
+                normals.extend(normal)
+        
+        normals = np.array(normals, dtype=np.float32)
+        
+        # Create red color for all vertices
+        num_vertices = len(positions) // 3
+        colors = np.ones(num_vertices * 4, dtype=np.float32)
+        for i in range(num_vertices):
+            colors[i*4] = 1.0     # R (red)
+            colors[i*4+1] = 0.1   # G (slight green)
+            colors[i*4+2] = 0.1   # B (slight blue)
+            colors[i*4+3] = 0.9   # A (slightly transparent)
+            
+    except Exception as e:
+        print(f"Error loading laser model: {e}")
+        # Create fallback geometry
+        # Create a simple elongated cone shape for the laser
+        positions = []
+        normals = []
+        colors = []
+        
+        # Tip of the laser
+        tip_pos = np.array([0, 0, 2], dtype=np.float32)
+        
+        # Base circle vertices
+        segments = 8
+        for i in range(segments):
+            angle = 2.0 * np.pi * i / segments
+            x = 0.2 * np.cos(angle)  # radius of 0.2
+            y = 0.2 * np.sin(angle)
+            
+            # Add triangle: tip and two adjacent base vertices
+            next_i = (i + 1) % segments
+            next_angle = 2.0 * np.pi * next_i / segments
+            next_x = 0.2 * np.cos(next_angle)
+            next_y = 0.2 * np.sin(next_angle)
+            
+            # Base vertex 1
+            positions.extend([x, y, 0])
+            # Base vertex 2
+            positions.extend([next_x, next_y, 0])
+            # Tip vertex
+            positions.extend([tip_pos[0], tip_pos[1], tip_pos[2]])
+            
+            # Calculate normal for this triangle
+            v1 = np.array([x, y, 0])
+            v2 = np.array([next_x, next_y, 0])
+            v3 = tip_pos
+            normal = np.cross(v2 - v1, v3 - v1)
+            normal_len = np.linalg.norm(normal)
+            if normal_len > 0.0001:
+                normal = normal / normal_len
+            else:
+                normal = np.array([0, 0, 1])
+                
+            # Add normal for all 3 vertices of the triangle
+            for _ in range(3):
+                normals.extend([normal[0], normal[1], normal[2]])
+                colors.extend([1.0, 0.0, 0.0, 1.0])  # Red
+    
+        positions = np.array(positions, dtype=np.float32)
+        normals = np.array(normals, dtype=np.float32)
+        colors = np.array(colors, dtype=np.float32)
+    
+    # Create and return the laser properties
     laser_properties = {
         'positions': positions,
         'normals': normals,
         'colors': colors,
-        'position': np.array([0, 0, 0], dtype=np.float32),  # Will be set when fired.
-        'velocity': np.array([0, 0, 0], dtype=np.float32),  # Set by firing logic.
+        'position': np.array([0, 0, 0], dtype=np.float32),
+        'velocity': np.array([0, 0, 0], dtype=np.float32),
         'rotation': np.array([0, 0, 0], dtype=np.float32),
-        'scale': np.array([0.5, 0.5, 0.5], dtype=np.float32),
-        'color': np.array([1.0, 0.0, 0.0, 1.0], dtype=np.float32),
-        'sens': 250,
+        'scale': np.array([1.0, 1.0, 1.0], dtype=np.float32),
         'lifetime': 0.0,
+        'max_lifetime': 3.0  # Seconds before the laser disappears
     }
+    
     return laser_properties

@@ -76,6 +76,7 @@ class Window:
             "D":False,
             "Q":False,
             "E":False,
+            "F":False,
             "SPACE":False,
             "ENTER":False,
             "L_SHIFT":False,
@@ -100,6 +101,8 @@ class Window:
             inputs["Q"] = True
         if glfw.get_key(self.window, glfw.KEY_E) == glfw.PRESS:
             inputs["E"] = True
+        if glfw.get_key(self.window, glfw.KEY_F) == glfw.PRESS:
+            inputs["F"] = True
         if glfw.get_key(self.window, glfw.KEY_SPACE) == glfw.PRESS:
             inputs["SPACE"] = True
         if glfw.get_key(self.window, glfw.KEY_ENTER) == glfw.PRESS:
