@@ -24,6 +24,12 @@ class Window:
         self.windowWidth = mode.size.width
         # self.windowHeight = 1000
         # self.windowWidth = 1000
+        
+        self.first_mouse = True
+        self.last_x = self.windowWidth / 2
+        self.last_y = self.windowHeight / 2
+        self.lock_cursor = False
+        self.mouse_sensitivity = 0.1        
 
         self.window = glfw.create_window(self.windowWidth, self.windowHeight, "Space Heist", monitor, None)
         # Pass 2nd last parameter as 'monitor' instead of None for fullscreen experience
@@ -114,8 +120,33 @@ class Window:
         if glfw.get_mouse_button(self.window, glfw.MOUSE_BUTTON_LEFT) == glfw.PRESS:
             inputs["L_CLICK"] = True
 
-        xpos, ypos = glfw.get_cursor_pos(self.window)
-        inputs["mouseDelta"] = [xpos - self.windowWidth/2, ypos - self.windowHeight/2]
+        # xpos, ypos = glfw.get_cursor_pos(self.window)
+        current_x, current_y = glfw.get_cursor_pos(self.window)
+            # Track mouse movement for camera control
+        if self.first_mouse:
+            self.last_x, self.last_y = current_x, current_y
+            self.first_mouse = False
+            
+        # Get current mouse position
+        x_pos, y_pos = glfw.get_cursor_pos(self.window)
+        
+        # inputs["mouseDelta"] = [x_pos - self.windowWidth/2, y_pos - self.windowHeight/2]
+        
+            # Calculate delta
+        delta_x = current_x - self.last_x
+        delta_y = current_y - self.last_y
+        
+        # Store for next frame
+        self.last_x = current_x
+        self.last_y = current_y
+        
+        inputs["mouseDelta"] = [delta_x, delta_y]
+       
+        
+        # Center cursor when in FPP mode if requested
+        if self.lock_cursor:
+            glfw.set_cursor_pos(self.window, self.windowWidth / 2, self.windowHeight / 2)
+            self.last_x, self.last_y = self.windowWidth / 2, self.windowHeight / 2
 
         self.impl.process_inputs()
 
